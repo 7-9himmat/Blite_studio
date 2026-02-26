@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: blite_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: blite_user
+      POSTGRES_PASSWORD: blite_password
+      POSTGRES_DB: blite_warehouse
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - blite_network
+
+  redis:
+    image: redis:alpine
+    container_name: blite_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - blite_network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    container_name: blite_search
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - blite_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  es_data:
+
+networks:
+  blite_network:
+    driver: bridge

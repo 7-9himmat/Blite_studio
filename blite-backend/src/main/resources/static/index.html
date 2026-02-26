@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BLite ETL Studio</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; background: #f4f4f9; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        .upload-box { border: 2px dashed #ccc; padding: 2rem; text-align: center; margin-bottom: 2rem; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>⚡ BLite ETL Studio</h1>
+
+    <div class="upload-box">
+        <h3>1. Upload CSV</h3>
+        <input type="file" id="csvFile" accept=".csv" />
+        <br><br>
+        <button onclick="uploadAndPreview()">Upload & Preview Transform</button>
+    </div>
+
+    <div id="resultsArea" style="display:none;">
+        <h3>2. Transformation Preview (First 5 Rows)</h3>
+        <p><i>Applying: UpperCase on 'name'</i></p>
+        <table id="previewTable">
+            <thead>
+            <tr id="tableHeader"></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    async function uploadAndPreview() {
+        const fileInput = document.getElementById('csvFile');
+        if(fileInput.files.length === 0) {
+            alert("Please select a file!");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        // Call the Spring Boot API
+        try {
+            const response = await fetch('/api/preview', {
+                method: 'POST',
+                body: formData
+            });
+
+            if(!response.ok) throw new Error("Upload failed");
+
+            const data = await response.json();
+            renderTable(data);
+        } catch (error) {
+            console.error(error);
+            alert("Error processing file");
+        }
+    }
+
+    function renderTable(data) {
+        if(data.length === 0) return;
+
+        const headers = Object.keys(data[0]);
+        const headerRow = document.getElementById('tableHeader');
+        const body = document.getElementById('tableBody');
+
+        // Clear previous
+        headerRow.innerHTML = '';
+        body.innerHTML = '';
+        document.getElementById('resultsArea').style.display = 'block';
+
+        // Draw Headers
+        headers.forEach(h => {
+            const th = document.createElement('th');
+            th.textContent = h;
+            headerRow.appendChild(th);
+        });
+
+        // Draw Rows
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            headers.forEach(h => {
+                const td = document.createElement('td');
+                td.textContent = row[h];
+                tr.appendChild(td);
+            });
+            body.appendChild(tr);
+        });
+    }
+</script>
+
+</body>
+</html>
